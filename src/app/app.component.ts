@@ -20,7 +20,6 @@ export class AppComponent implements OnInit {
   private localStream = null;
   private peer = null;
   private exsistingCall = null;
-  private remoteStream = null;
 
   constructor(private afs: AngularFirestore) {
     this.roomsCollection = afs.collection<any>('rooms');
@@ -61,7 +60,6 @@ export class AppComponent implements OnInit {
     this.roomName = call.name;
     call.on('stream', (stream) => {
       this.addVideo(call, stream);
-      this.remoteStream = stream;
     });
     call.on('removeStream', (stream) => {
       this.removeVideo(stream.peerId);
