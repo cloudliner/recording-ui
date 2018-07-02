@@ -17,7 +17,7 @@
       <mat-select #selected>
         <mat-option>None</mat-option>
         <ng-container *ngFor="let room of rooms | async">
-          <mat-option value="{{ room.name }}">{{ room.name }}</mat-option>
+          <mat-option [value]="room.name">{{ room.name }}</mat-option>
         </ng-container>
       </mat-select>
     </mat-form-field>
@@ -30,5 +30,9 @@
   </div>
   <div>
     <button (click)="exit()" mat-button>Exit</button>
+    <button (click)="record()" mat-button>{{ recoringText }}</button>
+    <ng-container *ngIf="blobUrl">
+      <a [href]="blobUrl" download="recorded.webm">Download</a>
+    </ng-container>
   </div>
 </ng-container>

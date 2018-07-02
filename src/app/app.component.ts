@@ -2,8 +2,10 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { environment } from '../environments/environment';
 import { AngularFirestore, AngularFirestoreCollection } from 'angularfire2/firestore';
 import { Observable } from 'rxjs';
+import { DomSanitizer } from '@angular/platform-browser';
 
 declare var Peer: any;
+declare var MediaRecorder: any;
 
 @Component({
   selector: 'app-root',
@@ -21,7 +23,13 @@ export class AppComponent implements OnInit {
   private peer = null;
   private exsistingCall = null;
 
-  constructor(private afs: AngularFirestore) {
+  private recorder = null;
+  recoringText = 'Start Record';
+  blobUrl = null;
+
+  constructor(
+    private afs: AngularFirestore,
+    private sanitizer: DomSanitizer) {
     this.roomsCollection = afs.collection<any>('rooms');
     this.rooms = this.roomsCollection.valueChanges();
   }
@@ -132,5 +140,38 @@ export class AppComponent implements OnInit {
       this.peer.on('error', (err) => {
         alert(err.message);
       });
+  }
+
+  record() {
+    if (this.recorder) {
+      this.recorder.stop();
+    } else {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+      .then((audioStream) => {
+        this.blobUrl = null;
+        const chunks = [];
+        const options = {
+          mimeType: 'audio/webm;',
+        };
+        this.recorder = new MediaRecorder(audioStream, options);
+        this.recorder.ondataavailable = (evt) =>  {
+          console.log(`Data: evt.data.type=${evt.data.type} size=${evt.data.size}`);
+          chunks.push(evt.data);
+        };
+        this.recorder.onstop = (evt) => {
+          console.log('Stop Recording');
+          this.recorder = null;
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          this.blobUrl = this.sanitizer.bypassSecurityTrustUrl(window.URL.createObjectURL(audioBlob));
+          this.recoringText = 'Start Record';
+        };
+        this.recorder.start(1000);
+        this.recoringText = 'Stop Record';
+        console.log('Start Recording');
+      })
+      .catch((error) => {
+        console.log('mediaDevice.getUserMedia() error:', error);
+      });
+    }
   }
 }
