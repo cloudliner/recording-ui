@@ -184,7 +184,7 @@ export class AppComponent implements OnInit {
         console.log('Start Recording');
       })
       .catch((error) => {
-        console.log('mediaDevice.getUserMedia() error:', error);
+        console.error('mediaDevice.getUserMedia() error:', error);
       });
     }
   }

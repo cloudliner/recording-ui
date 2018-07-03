@@ -1,22 +1,20 @@
-<mat-checkbox [(ngModel)]="isAudioOnly">Autio Only</mat-checkbox>
+<div>
+  <input id="audio-only" type="checkbox" [(ngModel)]="isAudioOnly">Autio Only
+</div>
 <ng-container *ngIf="!roomName">
   <div>
     New Room:
-    <mat-form-field>
-      <input placeholder="Room Name" matInput #input>
-    </mat-form-field>
-    <button (click)="create(input.value)" mat-button>Create</button>
+    <input placeholder="Room Name" matInput #input>
+    <button (click)="create(input.value)">Create</button>
   </div>
   <div>
     Join Room:
-    <mat-form-field>
-      <mat-select id="room" #selected>
+      <select id="room" #selected>
         <ng-container *ngFor="let room of rooms | async">
-          <mat-option [value]="room.name">{{ room.name }}</mat-option>
+          <option [value]="room.name">{{ room.name }}</option>
         </ng-container>
-      </mat-select>
-    </mat-form-field>
-    <button id="join" (click)="join(selected.value)" mat-button>Join</button>
+      </select>
+    <button id="join" (click)="join(selected.value)">Join</button>
   </div>
 </ng-container>
 <ng-container *ngIf="roomName">
@@ -24,8 +22,8 @@
     SkyWay ID: {{ skywayId }}
   </div>
   <div>
-    <button (click)="exit()" mat-button>Exit</button>
-    <button (click)="record()" mat-button>{{ recoringText }}</button>
+    <button (click)="exit()" id="exit">Exit</button>
+    <button (click)="record()" id="record">{{ recoringText }}</button>
     <ng-container *ngIf="blobUrl">
       <a [href]="blobUrl" download="recorded.webm" id="download" >Download</a>
     </ng-container>
