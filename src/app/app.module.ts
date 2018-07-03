@@ -5,7 +5,7 @@ import { AngularFireModule } from 'angularfire2';
 import { AngularFirestoreModule } from 'angularfire2/firestore';
 import { environment } from '../environments/environment';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule, MatInputModule, MatSelectModule } from '@angular/material';
+import { MatButtonModule, MatInputModule, MatSelectModule, MatCheckboxModule } from '@angular/material';
 
 import { AppComponent } from './app.component';
 import { VideoPlayerComponent } from './video-player/video-player.component';
@@ -23,7 +23,8 @@ import { VideoPlayerComponent } from './video-player/video-player.component';
     FormsModule,
     MatButtonModule,
     MatInputModule,
-    MatSelectModule
+    MatSelectModule,
+    MatCheckboxModule
   ],
   providers: [],
   bootstrap: [AppComponent]

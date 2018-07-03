@@ -16,6 +16,15 @@ export class AppComponent implements OnInit {
   private roomsCollection: AngularFirestoreCollection<any>;
   rooms: Observable<any[]>;
 
+  _isAudioOnly = true;
+  get isAudioOnly(): boolean {
+    return this._isAudioOnly;
+  }
+  set isAudioOnly(value: boolean) {
+    this._isAudioOnly = value;
+    this.setupMedia();
+  }
+
   videoStreams: { id: string; stream: MediaStream; }[] = [];
   skywayId: string;
   roomName: string;
@@ -88,9 +97,9 @@ export class AppComponent implements OnInit {
     });
   }
 
-  removeVideo(peerId) {
+  removeVideo(id) {
     const index = this.videoStreams.findIndex((videoStream) => {
-      if (videoStream.id === peerId) {
+      if (videoStream.id === id) {
         return true;
       }
       return false;
@@ -114,12 +123,17 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.setupMedia();
+  }
+
+  setupMedia() {
     const constraints = {
-      video: true,
+      video: ! this.isAudioOnly,
       audio: true
     };
     navigator.mediaDevices.getUserMedia(constraints)
       .then((stream) => {
+        this.removeVideo('myStream');
         this.videoStreams.push({id: 'myStream', stream: stream });
         this.localStream = stream;
       }).catch((error) => {
@@ -151,7 +165,7 @@ export class AppComponent implements OnInit {
         this.blobUrl = null;
         const chunks = [];
         const options = {
-          mimeType: 'audio/webm;',
+          mimeType: 'audio/webm; codecs=opus',
         };
         this.recorder = new MediaRecorder(audioStream, options);
         this.recorder.ondataavailable = (evt) =>  {
@@ -161,7 +175,7 @@ export class AppComponent implements OnInit {
         this.recorder.onstop = (evt) => {
           console.log('Stop Recording');
           this.recorder = null;
-          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          const audioBlob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
           this.blobUrl = this.sanitizer.bypassSecurityTrustUrl(window.URL.createObjectURL(audioBlob));
           this.recoringText = 'Start Record';
         };

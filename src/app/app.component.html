@@ -1,8 +1,4 @@
-<div>
-  <ng-container *ngFor="let videoStream of videoStreams">
-    <app-video-player [stream]="videoStream.stream"></app-video-player>
-  </ng-container>
-</div>
+<mat-checkbox [(ngModel)]="isAudioOnly">Autio Only</mat-checkbox>
 <ng-container *ngIf="!roomName">
   <div>
     New Room:
@@ -14,14 +10,13 @@
   <div>
     Join Room:
     <mat-form-field>
-      <mat-select #selected>
-        <mat-option>None</mat-option>
+      <mat-select id="room" #selected>
         <ng-container *ngFor="let room of rooms | async">
           <mat-option [value]="room.name">{{ room.name }}</mat-option>
         </ng-container>
       </mat-select>
     </mat-form-field>
-    <button (click)="join(selected.value)" mat-button>Join</button>
+    <button id="join" (click)="join(selected.value)" mat-button>Join</button>
   </div>
 </ng-container>
 <ng-container *ngIf="roomName">
@@ -32,7 +27,12 @@
     <button (click)="exit()" mat-button>Exit</button>
     <button (click)="record()" mat-button>{{ recoringText }}</button>
     <ng-container *ngIf="blobUrl">
-      <a [href]="blobUrl" download="recorded.webm">Download</a>
+      <a [href]="blobUrl" download="recorded.webm" id="download" >Download</a>
     </ng-container>
   </div>
 </ng-container>
+<div>
+  <ng-container *ngFor="let videoStream of videoStreams">
+    <app-video-player [stream]="videoStream.stream"></app-video-player>
+  </ng-container>
+</div>
