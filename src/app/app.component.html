@@ -34,6 +34,6 @@
 </ng-container>
 <div>
   <ng-container *ngFor="let videoStream of videoStreams">
-    <app-video-player [stream]="videoStream.stream"></app-video-player>
+    <app-video-player [stream]="videoStream.stream" [id]="videoStream.id"></app-video-player>
   </ng-container>
 </div>

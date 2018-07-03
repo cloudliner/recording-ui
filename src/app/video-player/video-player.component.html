@@ -1,1 +1,5 @@
-<video autoplay muted="true" class="videoPlayer" #player></video>
+<div class="player">
+  <div>{{ id }}</div>
+  <video autoplay muted="true" class="videoPlayer" [class.hide]="!hasVideo" controls #videoPlayer></video>
+  <audio autoplay muted="true" class="audioPlayer" [class.hide]="hasVideo" controls #audioPlayer></audio>
+</div>

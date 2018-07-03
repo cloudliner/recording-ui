@@ -24,19 +24,28 @@ export class AppComponent implements OnInit {
     this._isAudioOnly = value;
     this.setupMedia();
   }
-  isRecordOnly = false;
 
-  videoStreams: { id: string; stream: MediaStream; }[] = [];
+  _isRecordOnly = false;
+  get isRecordOnly(): boolean {
+    return this._isRecordOnly;
+  }
+  set isRecordOnly(value: boolean) {
+    this._isRecordOnly = value;
+    this.setupMedia();
+  }
+
+  videoStreams: { id: string; stream: MediaStream; inputAudio: any; }[] = [];
   skywayId: string;
   roomName: string;
   private localStream = null;
   private peer = null;
   private exsistingCall = null;
 
-  private remoteStream = null;
   private recorder = null;
   recoringText = 'Start Record';
   blobUrl = null;
+  audioContext = null;
+  mixedAudio = null;
 
   constructor(
     private afs: AngularFirestore,
@@ -58,15 +67,15 @@ export class AppComponent implements OnInit {
     }
     const call = this.peer.joinRoom(roomName, { mode: 'sfu', stream: this.localStream });
     this.setupCallEventHandlers(call);
+    this.audioContext = new AudioContext();
+    this.mixedAudio = this.audioContext.createMediaStreamDestination();
   }
 
   exit() {
     console.log('exit:', this.roomName);
+    this.mixedAudio = null;
+    this.audioContext = null;
     this.exsistingCall.close();
-  }
-
-  loadVideo() {
-    console.log('loadVideo');
   }
 
   setupCallEventHandlers(call) {
@@ -78,7 +87,6 @@ export class AppComponent implements OnInit {
     this.setupEndCallUI();
     this.roomName = call.name;
     call.on('stream', (stream) => {
-      this.remoteStream = stream;
       this.addVideo(call, stream);
     });
     call.on('removeStream', (stream) => {
@@ -94,9 +102,12 @@ export class AppComponent implements OnInit {
   }
 
   addVideo(call, stream) {
+    const inputAudio = this.audioContext.createMediaStreamSource(stream);
+    inputAudio.connect(this.mixedAudio);
     this.videoStreams.push({
       id: stream.peerId,
-      stream: stream
+      stream: stream,
+      inputAudio: inputAudio,
     });
   }
 
@@ -108,13 +119,24 @@ export class AppComponent implements OnInit {
       return false;
     });
     if (0 <= index) {
+      const inputAudio = this.videoStreams[index].inputAudio;
+      if (inputAudio) {
+        inputAudio.disconnect(this.mixedAudio);
+      }
       this.videoStreams.splice(index, 1);
     }
   }
 
   removeAllRemoteViedos() {
-    const length = this.videoStreams.length;
-    this.videoStreams.splice(1, length - 1);
+    const toBeRemoved = [];
+    this.videoStreams.forEach((videoStream) => {
+      if (videoStream.id !== 'localStream') {
+        toBeRemoved.push(videoStream.id);
+      }
+    });
+    toBeRemoved.forEach((id) => {
+      this.removeVideo(id);
+    });
   }
 
   setupMakeCallUI() {
@@ -127,24 +149,6 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.setupMedia();
-  }
-
-  setupMedia() {
-    if (! this.isRecordOnly) {
-      const constraints = {
-        video: ! this.isAudioOnly,
-        audio: true
-      };
-      navigator.mediaDevices.getUserMedia(constraints)
-        .then((stream) => {
-          this.removeVideo('myStream');
-          this.videoStreams.push({id: 'myStream', stream: stream });
-          this.localStream = stream;
-        }).catch((error) => {
-          console.error('mediaDevice.getUserMedia() error:', error);
-          return;
-        });
-    }
     this.peer = new Peer({
       key: environment.skyway.apiKey,
       debug: 3,
@@ -161,21 +165,35 @@ export class AppComponent implements OnInit {
     });
   }
 
+  setupMedia() {
+    this.localStream = null;
+    if (! this.isRecordOnly) {
+      const constraints = {
+        video: ! this.isAudioOnly,
+        audio: true
+      };
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+          this.removeVideo('localStream');
+          this.videoStreams.push({id: 'localStream', stream: stream, inputAudio: null });
+          this.localStream = stream;
+          if (this.exsistingCall) {
+            this.exsistingCall.replaceStream(stream);
+          }
+        }).catch((error) => {
+          console.error('mediaDevice.getUserMedia() error:', error);
+          return;
+        });
+    } else {
+      this.removeVideo('localStream');
+    }
+  }
+
   record() {
     if (this.recorder) {
       this.recorder.stop();
     } else {
-      if (! this.isRecordOnly) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-        .then((audioStream) => {
-          this.recordStream(audioStream);
-        })
-        .catch((error) => {
-          console.error('mediaDevice.getUserMedia() error:', error);
-        });
-      } else {
-        this.recordStream(this.remoteStream);
-      }
+      this.recordStream(this.mixedAudio.stream);
     }
   }
 
