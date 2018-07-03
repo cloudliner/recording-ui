@@ -24,6 +24,7 @@ export class AppComponent implements OnInit {
     this._isAudioOnly = value;
     this.setupMedia();
   }
+  isRecordOnly = false;
 
   videoStreams: { id: string; stream: MediaStream; }[] = [];
   skywayId: string;
@@ -32,6 +33,7 @@ export class AppComponent implements OnInit {
   private peer = null;
   private exsistingCall = null;
 
+  private remoteStream = null;
   private recorder = null;
   recoringText = 'Start Record';
   blobUrl = null;
@@ -76,6 +78,7 @@ export class AppComponent implements OnInit {
     this.setupEndCallUI();
     this.roomName = call.name;
     call.on('stream', (stream) => {
+      this.remoteStream = stream;
       this.addVideo(call, stream);
     });
     call.on('removeStream', (stream) => {
@@ -127,65 +130,75 @@ export class AppComponent implements OnInit {
   }
 
   setupMedia() {
-    const constraints = {
-      video: ! this.isAudioOnly,
-      audio: true
-    };
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then((stream) => {
-        this.removeVideo('myStream');
-        this.videoStreams.push({id: 'myStream', stream: stream });
-        this.localStream = stream;
-      }).catch((error) => {
-        console.error('mediaDevice.getUserMedia() error:', error);
-        return;
-      });
-      this.peer = new Peer({
-        key: environment.skyway.apiKey,
-        debug: 3,
-      });
-      this.peer.on('open', () => {
-        this.skywayId = this.peer.id;
-      });
-      this.peer.on('call', (call) => {
-        call.answer(this.localStream);
-        this.setupCallEventHandlers(call);
-      });
-      this.peer.on('error', (err) => {
-        alert(err.message);
-      });
+    if (! this.isRecordOnly) {
+      const constraints = {
+        video: ! this.isAudioOnly,
+        audio: true
+      };
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+          this.removeVideo('myStream');
+          this.videoStreams.push({id: 'myStream', stream: stream });
+          this.localStream = stream;
+        }).catch((error) => {
+          console.error('mediaDevice.getUserMedia() error:', error);
+          return;
+        });
+    }
+    this.peer = new Peer({
+      key: environment.skyway.apiKey,
+      debug: 3,
+    });
+    this.peer.on('open', () => {
+      this.skywayId = this.peer.id;
+    });
+    this.peer.on('call', (call) => {
+      call.answer(this.localStream);
+      this.setupCallEventHandlers(call);
+    });
+    this.peer.on('error', (err) => {
+      alert(err.message);
+    });
   }
 
   record() {
     if (this.recorder) {
       this.recorder.stop();
     } else {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-      .then((audioStream) => {
-        this.blobUrl = null;
-        const chunks = [];
-        const options = {
-          mimeType: 'audio/webm; codecs=opus',
-        };
-        this.recorder = new MediaRecorder(audioStream, options);
-        this.recorder.ondataavailable = (evt) =>  {
-          console.log(`Data: evt.data.type=${evt.data.type} size=${evt.data.size}`);
-          chunks.push(evt.data);
-        };
-        this.recorder.onstop = (evt) => {
-          console.log('Stop Recording');
-          this.recorder = null;
-          const audioBlob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
-          this.blobUrl = this.sanitizer.bypassSecurityTrustUrl(window.URL.createObjectURL(audioBlob));
-          this.recoringText = 'Start Record';
-        };
-        this.recorder.start(1000);
-        this.recoringText = 'Stop Record';
-        console.log('Start Recording');
-      })
-      .catch((error) => {
-        console.error('mediaDevice.getUserMedia() error:', error);
-      });
+      if (! this.isRecordOnly) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((audioStream) => {
+          this.recordStream(audioStream);
+        })
+        .catch((error) => {
+          console.error('mediaDevice.getUserMedia() error:', error);
+        });
+      } else {
+        this.recordStream(this.remoteStream);
+      }
     }
+  }
+
+  recordStream(stream: MediaStream) {
+    this.blobUrl = null;
+    const chunks = [];
+    const options = {
+      mimeType: 'audio/webm; codecs=opus',
+    };
+    this.recorder = new MediaRecorder(stream, options);
+    this.recorder.ondataavailable = (evt) =>  {
+      console.log(`Data: evt.data.type=${evt.data.type} size=${evt.data.size}`);
+      chunks.push(evt.data);
+    };
+    this.recorder.onstop = (evt) => {
+      console.log('Stop Recording');
+      this.recorder = null;
+      const audioBlob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
+      this.blobUrl = this.sanitizer.bypassSecurityTrustUrl(window.URL.createObjectURL(audioBlob));
+      this.recoringText = 'Start Record';
+    };
+    this.recorder.start(1000);
+    this.recoringText = 'Stop Record';
+    console.log('Start Recording');
   }
 }

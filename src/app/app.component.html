@@ -1,5 +1,8 @@
 <div>
-  <input id="audio-only" type="checkbox" [(ngModel)]="isAudioOnly">Autio Only
+  <input id="audio-only" type="checkbox" [(ngModel)]="isAudioOnly">Audio Only
+</div>
+<div>
+  <input id="record-only" type="checkbox" [(ngModel)]="isRecordOnly">Record Only
 </div>
 <ng-container *ngIf="!roomName">
   <div>
