@@ -17,9 +17,15 @@ export class VideoPlayerComponent implements OnInit {
     if (videoTracks.length === 0) {
       this.hasVideo = false;
       this.audioPlayer.nativeElement.srcObject = this.stream;
+      if (this.id === 'localStream') {
+        this.audioPlayer.nativeElement.muted = true;
+      }
     } else {
       this.hasVideo = true;
       this.videoPlayer.nativeElement.srcObject = this.stream;
+      if (this.id === 'localStream') {
+        this.videoPlayer.nativeElement.muted = true;
+      }
     }
   }
 }
