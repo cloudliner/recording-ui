@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { environment } from '../environments/environment';
 import { AngularFirestore, AngularFirestoreCollection } from 'angularfire2/firestore';
 import { Observable } from 'rxjs';
@@ -49,7 +49,8 @@ export class AppComponent implements OnInit {
 
   constructor(
     private afs: AngularFirestore,
-    private sanitizer: DomSanitizer) {
+    private sanitizer: DomSanitizer,
+    private changeDetect: ChangeDetectorRef) {
     this.roomsCollection = afs.collection<any>('rooms');
     this.rooms = this.roomsCollection.valueChanges();
   }
@@ -73,6 +74,7 @@ export class AppComponent implements OnInit {
 
   exit() {
     console.log('exit:', this.roomName);
+    this.blobUrl = null;
     this.mixedAudio = null;
     this.audioContext = null;
     this.exsistingCall.close();
@@ -109,6 +111,7 @@ export class AppComponent implements OnInit {
       stream: stream,
       inputAudio: inputAudio,
     });
+    this.changeDetect.detectChanges();
   }
 
   removeVideo(id) {
@@ -125,6 +128,7 @@ export class AppComponent implements OnInit {
       }
       this.videoStreams.splice(index, 1);
     }
+    this.changeDetect.detectChanges();
   }
 
   removeAllRemoteViedos() {
@@ -210,12 +214,14 @@ export class AppComponent implements OnInit {
     };
     this.recorder.onstop = (evt) => {
       console.log('Stop Recording');
-      this.recorder = null;
       const audioBlob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
-      this.blobUrl = this.sanitizer.bypassSecurityTrustUrl(window.URL.createObjectURL(audioBlob));
+      const blob = window.URL.createObjectURL(audioBlob);
+      this.blobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blob);
       this.recoringText = 'Start Record';
+      this.changeDetect.detectChanges();
+      this.recorder = null;
     };
-    this.recorder.start(1000);
+    this.recorder.start();
     this.recoringText = 'Stop Record';
     console.log('Start Recording');
   }
