@@ -28,7 +28,7 @@
     <button (click)="exit()" id="exit">Exit</button>
     <button (click)="record()" id="record">{{ recoringText }}</button>
     <ng-container *ngIf="blobUrl">
-      <a [href]="blobUrl" download="recorded.webm" id="download" >Download</a>
+      <a [href]="blobUrl" [download]="fileName" id="download" >Download</a>
     </ng-container>
   </div>
 </ng-container>

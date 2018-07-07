@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { environment } from '../environments/environment';
 import { AngularFirestore, AngularFirestoreCollection } from 'angularfire2/firestore';
+import { AngularFireStorage } from 'angularfire2/storage';
 import { Observable } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -46,9 +47,11 @@ export class AppComponent implements OnInit {
   blobUrl = null;
   audioContext = null;
   mixedAudio = null;
+  fileName = null;
 
   constructor(
     private afs: AngularFirestore,
+    private storage: AngularFireStorage,
     private sanitizer: DomSanitizer,
     private changeDetect: ChangeDetectorRef) {
     this.roomsCollection = afs.collection<any>('rooms');
@@ -214,9 +217,19 @@ export class AppComponent implements OnInit {
     };
     this.recorder.onstop = (evt) => {
       console.log('Stop Recording');
+
+      // Create download link
       const audioBlob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
       const blob = window.URL.createObjectURL(audioBlob);
+      this.fileName = `recorded-${ Date.now() }.webm`;
       this.blobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blob);
+
+      // Upload file
+      const strageRef = this.storage.ref(this.fileName);
+      strageRef.put(audioBlob).then((snapshot) => {
+        console.log(`Upload File: ${ this.fileName }`);
+      });
+
       this.recoringText = 'Start Record';
       this.changeDetect.detectChanges();
       this.recorder = null;
