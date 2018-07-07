@@ -9,6 +9,6 @@ export const environment = {
     messagingSenderId: '474667216230'
   },
   skyway: {
-    apiKey: '77c7d4df-e243-42e6-8746-b793d309f3b6'
+    apiKey: '947ecee7-dded-4fcb-b9e1-2942e4ad9f1c'
   }
 };
