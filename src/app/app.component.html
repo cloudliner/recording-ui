@@ -13,7 +13,7 @@
   <div>
     Join Room:
       <select id="room" #selected>
-        <ng-container *ngFor="let room of rooms | async">
+        <ng-container *ngFor="let room of rooms$ | async">
           <option [value]="room.name">{{ room.name }}</option>
         </ng-container>
       </select>
@@ -28,7 +28,10 @@
     <button (click)="exit()" id="exit">Exit</button>
     <button (click)="record()" id="record">{{ recoringText }}</button>
     <ng-container *ngIf="blobUrl">
-      <a [href]="blobUrl" [download]="fileName" id="download" >Download</a>
+      <div><a [href]="blobUrl" [download]="fileName" id="download" target="_blank">Local Download</a></div>
+    </ng-container>
+    <ng-container *ngIf="strageDownloadUrl">
+      <div><a [href]="strageDownloadUrl" [download]="fileName" id="remote-download" target="_blank">Remote Download</a></div>
     </ng-container>
   </div>
 </ng-container>

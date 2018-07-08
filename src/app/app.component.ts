@@ -15,7 +15,7 @@ declare var MediaRecorder: any;
 })
 export class AppComponent implements OnInit {
   private roomsCollection: AngularFirestoreCollection<any>;
-  rooms: Observable<any[]>;
+  rooms$: Observable<any[]>;
 
   _isAudioOnly = true;
   get isAudioOnly(): boolean {
@@ -48,6 +48,7 @@ export class AppComponent implements OnInit {
   audioContext = null;
   mixedAudio = null;
   fileName = null;
+  strageDownloadUrl: string = null;
 
   constructor(
     private afs: AngularFirestore,
@@ -55,7 +56,7 @@ export class AppComponent implements OnInit {
     private sanitizer: DomSanitizer,
     private changeDetect: ChangeDetectorRef) {
     this.roomsCollection = afs.collection<any>('rooms');
-    this.rooms = this.roomsCollection.valueChanges();
+    this.rooms$ = this.roomsCollection.valueChanges();
   }
 
   create(roomName: string) {
@@ -206,6 +207,7 @@ export class AppComponent implements OnInit {
 
   recordStream(stream: MediaStream) {
     this.blobUrl = null;
+    this.strageDownloadUrl = null;
     const chunks = [];
     const options = {
       mimeType: 'audio/webm; codecs=opus',
@@ -223,16 +225,28 @@ export class AppComponent implements OnInit {
       const blob = window.URL.createObjectURL(audioBlob);
       this.fileName = `recorded-${ Date.now() }.webm`;
       this.blobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blob);
-
-      // Upload file
-      const strageRef = this.storage.ref(this.fileName);
-      strageRef.put(audioBlob).then((snapshot) => {
-        console.log(`Upload File: ${ this.fileName }`);
-      });
-
-      this.recoringText = 'Start Record';
       this.changeDetect.detectChanges();
-      this.recorder = null;
+
+      (async() => {
+        // Upload file
+        const strageRef = this.storage.ref(this.fileName);
+        await strageRef.put(audioBlob);
+        console.log(`Upload File: ${ this.fileName }`);
+        const metadata = {
+          contentType: 'audio/webm; codecs=opus'
+        };
+        await strageRef.updateMetatdata(metadata).toPromise();
+        await strageRef.getDownloadURL().toPromise()
+          .then((downloadUrl) => {
+            console.log(`Remote Download Url: ${ downloadUrl }`);
+            this.strageDownloadUrl = downloadUrl;
+            this.changeDetect.detectChanges();
+          });
+
+        this.recoringText = 'Start Record';
+        this.changeDetect.detectChanges();
+        this.recorder = null;
+      })();
     };
     this.recorder.start();
     this.recoringText = 'Stop Record';
