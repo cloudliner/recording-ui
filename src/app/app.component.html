@@ -30,8 +30,8 @@
     <ng-container *ngIf="blobUrl">
       <div><a [href]="blobUrl" [download]="fileName" id="download" target="_blank">Local Download</a></div>
     </ng-container>
-    <ng-container *ngIf="strageDownloadUrl">
-      <div><a [href]="strageDownloadUrl" [download]="fileName" id="remote-download" target="_blank">Remote Download</a></div>
+    <ng-container *ngIf="storageDownloadUrl">
+      <div><a [href]="storageDownloadUrl" [download]="fileName" id="remote-download" target="_blank">Remote Download</a></div>
     </ng-container>
   </div>
 </ng-container>

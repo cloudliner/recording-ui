@@ -48,7 +48,7 @@ export class AppComponent implements OnInit {
   audioContext = null;
   mixedAudio = null;
   fileName = null;
-  strageDownloadUrl: string = null;
+  storageDownloadUrl: string = null;
 
   constructor(
     private afs: AngularFirestore,
@@ -207,7 +207,7 @@ export class AppComponent implements OnInit {
 
   recordStream(stream: MediaStream) {
     this.blobUrl = null;
-    this.strageDownloadUrl = null;
+    this.storageDownloadUrl = null;
     const chunks = [];
     const options = {
       mimeType: 'audio/webm; codecs=opus',
@@ -229,17 +229,17 @@ export class AppComponent implements OnInit {
 
       (async() => {
         // Upload file
-        const strageRef = this.storage.ref(this.fileName);
-        await strageRef.put(audioBlob);
+        const storageRef = this.storage.ref(this.fileName);
+        await storageRef.put(audioBlob);
         console.log(`Upload File: ${ this.fileName }`);
         const metadata = {
           contentType: 'audio/webm; codecs=opus'
         };
-        await strageRef.updateMetatdata(metadata).toPromise();
-        await strageRef.getDownloadURL().toPromise()
+        await storageRef.updateMetatdata(metadata).toPromise();
+        await storageRef.getDownloadURL().toPromise()
           .then((downloadUrl) => {
             console.log(`Remote Download Url: ${ downloadUrl }`);
-            this.strageDownloadUrl = downloadUrl;
+            this.storageDownloadUrl = downloadUrl;
             this.changeDetect.detectChanges();
           });
 
