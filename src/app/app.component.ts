@@ -5,6 +5,7 @@ import { AngularFireStorage } from 'angularfire2/storage';
 import { Observable } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
 
+declare var window: any;
 declare var Peer: any;
 declare var MediaRecorder: any;
 
@@ -72,6 +73,7 @@ export class AppComponent implements OnInit {
     }
     const call = this.peer.joinRoom(roomName, { mode: 'sfu', stream: this.localStream });
     this.setupCallEventHandlers(call);
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new AudioContext();
     this.mixedAudio = this.audioContext.createMediaStreamDestination();
   }
